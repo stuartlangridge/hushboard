@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import os
 import gi
-import time
+import queue
 import threading
 from . import pulsectl
 
@@ -68,38 +68,40 @@ def xlistener(key_press_handler):
     record_dpy.record_free_context(ctx)
 
 
-def mute():
-    try:
-        pulse = pulsectl.Pulse('stuart-muter')
-    except pulsectl.PulseError:
-        time.sleep(0.2)
-        mute()
-        return
-    active_sources = [s for s in pulse.source_list() if s.port_active]
-    if len(active_sources) == 1:
-        # print("Muting active mic", active_sources[0])
-        pulse.source_mute(active_sources[0].index, 1)
-    elif len(active_sources) == 0:
-        print("There are no active microphones!")
-    else:
-        print("There is more than one active microphone so I don't know which one to unmute")
+class PulseHandler(object):
+    def __init__(self, q):
+        self.queue = q
+        self.pulse = pulsectl.Pulse('stuart-muter')
 
+    def wait(self, *args):
+        while True:
+            instruction = self.queue.get()
+            if instruction["op"] == "mute":
+                self.mute()
+            elif instruction["op"] == "unmute":
+                self.unmute()
+            else:
+                print("Didn't understand", instruction)
 
-def unmute():
-    try:
-        pulse = pulsectl.Pulse('stuart-muter')
-    except pulsectl.PulseError:
-        time.sleep(0.2)
-        unmute()
-        return
-    active_sources = [s for s in pulse.source_list() if s.port_active]
-    if len(active_sources) == 1:
-        # print("Unmuting active mic", active_sources[0])
-        pulse.source_mute(active_sources[0].index, 0)
-    elif len(active_sources) == 0:
-        print("There are no active microphones!")
-    else:
-        print("There is more than one active microphone so I don't know which one to unmute")
+    def mute(self):
+        active_sources = [s for s in self.pulse.source_list() if s.port_active]
+        if len(active_sources) == 1:
+            print("Muting active mic", active_sources[0])
+            self.pulse.source_mute(active_sources[0].index, 1)
+        elif len(active_sources) == 0:
+            print("There are no active microphones!")
+        else:
+            print("There is more than one active microphone so I don't know which one to unmute")
+
+    def unmute(self):
+        active_sources = [s for s in self.pulse.source_list() if s.port_active]
+        if len(active_sources) == 1:
+            print("Unmuting active mic", active_sources[0])
+            self.pulse.source_mute(active_sources[0].index, 0)
+        elif len(active_sources) == 0:
+            print("There are no active microphones!")
+        else:
+            print("There is more than one active microphone so I don't know which one to unmute")
 
 
 class UnkeebIndicator(GObject.GObject):
@@ -135,11 +137,17 @@ class UnkeebIndicator(GObject.GObject):
         self.menu.append(mabout)
 
         mquit = Gtk.MenuItem.new_with_mnemonic("_Quit")
-        mquit.connect("activate", lambda *largs: Gtk.main_quit(), None)
+        mquit.connect("activate", self.quit, None)
         mquit.show()
         self.menu.append(mquit)
 
         self.unmute_timer = None
+
+        self.queue = queue.SimpleQueue()
+        pulsehandler = PulseHandler(self.queue)
+        thread = threading.Thread(target=pulsehandler.wait)
+        thread.daemon = True
+        thread.start()
 
         thread = threading.Thread(target=xlistener, args=(self.key_pressed,))
         thread.daemon = True
@@ -157,19 +165,20 @@ class UnkeebIndicator(GObject.GObject):
         self.ind.set_status(AppIndicator.IndicatorStatus.ATTENTION)
         if self.unmute_timer:
             GLib.source_remove(self.unmute_timer)
-            thread = threading.Thread(target=mute)
-            thread.daemon = True
-            thread.start()
+        else:
+            self.queue.put_nowait({"op": "mute"})
         self.unmute_timer = GLib.timeout_add_seconds(
             self.mute_time_seconds, self.unmute)
+
+    def quit(self, *args):
+        self.unmute()
+        GLib.timeout_add_seconds(1, lambda *args: Gtk.main_quit())
 
     def unmute(self):
         # print("unmute mic!")
         self.ind.set_status(AppIndicator.IndicatorStatus.ACTIVE)
         self.unmute_timer = None
-        thread = threading.Thread(target=unmute)
-        thread.daemon = True
-        thread.start()
+        self.queue.put_nowait({"op": "unmute"})
 
     def show_about(*args):
         dialog = Gtk.AboutDialog()

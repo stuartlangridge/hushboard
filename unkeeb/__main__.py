@@ -110,8 +110,8 @@ class UnkeebIndicator(GObject.GObject):
         self.mute_time_seconds = 2
 
         icon_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "icons"))
-        muted_icon = os.path.abspath(os.path.join(icon_path, "muted.svg"))
-        unmuted_icon = os.path.abspath(os.path.join(icon_path, "unmuted.svg"))
+        muted_icon = os.path.abspath(os.path.join(icon_path, "muted-symbolic.svg"))
+        unmuted_icon = os.path.abspath(os.path.join(icon_path, "unmuted-symbolic.svg"))
 
         # Create the indicator object
         self.ind = AppIndicator.Indicator.new(
@@ -143,9 +143,9 @@ class UnkeebIndicator(GObject.GObject):
         self.ind.set_status(AppIndicator.IndicatorStatus.ATTENTION)
         if self.unmute_timer:
             GLib.source_remove(self.unmute_timer)
-        thread = threading.Thread(target=mute)
-        thread.daemon = True
-        thread.start()
+            thread = threading.Thread(target=mute)
+            thread.daemon = True
+            thread.start()
         self.unmute_timer = GLib.timeout_add_seconds(
             self.mute_time_seconds, self.unmute)
 

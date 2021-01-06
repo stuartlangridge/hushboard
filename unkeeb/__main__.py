@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import sys
 import os
 import gi
 import queue
@@ -6,7 +7,7 @@ import threading
 from . import pulsectl
 
 gi.require_version('Gtk', '3.0')
-from gi.repository import GObject, Gtk, GLib
+from gi.repository import GObject, Gtk, GLib, GdkPixbuf
 
 gi.require_version('AppIndicator3', '0.1')
 from gi.repository import AppIndicator3 as AppIndicator
@@ -32,7 +33,7 @@ def record_callback(reply, key_press_handler):
     if not len(reply.data):
         # not an event
         return
-    if reply.data[0] < 2: # reply.data is bytes
+    if reply.data[0] < 2:  # reply.data is bytes
         return
 
     data = reply.data
@@ -72,6 +73,7 @@ class PulseHandler(object):
     def __init__(self, q):
         self.queue = q
         self.pulse = pulsectl.Pulse('stuart-muter')
+        self.verbose = "--verbose" in sys.argv
 
     def wait(self, *args):
         while True:
@@ -81,32 +83,34 @@ class PulseHandler(object):
             elif instruction["op"] == "unmute":
                 self.unmute()
             else:
-                print("Didn't understand", instruction)
+                self.print("Didn't understand", instruction)
+
+    def print(self, *args):
+        if self.verbose: print(*args)
 
     def mute(self):
         active_sources = [s for s in self.pulse.source_list() if s.port_active]
         if len(active_sources) == 1:
-            print("Muting active mic", active_sources[0])
+            self.print("Muting active mic", active_sources[0])
             self.pulse.source_mute(active_sources[0].index, 1)
         elif len(active_sources) == 0:
-            print("There are no active microphones!")
+            self.print("There are no active microphones!")
         else:
-            print("There is more than one active microphone so I don't know which one to unmute")
+            self.print("There is more than one active microphone so I don't know which one to unmute")
 
     def unmute(self):
         active_sources = [s for s in self.pulse.source_list() if s.port_active]
         if len(active_sources) == 1:
-            print("Unmuting active mic", active_sources[0])
+            self.print("Unmuting active mic", active_sources[0])
             self.pulse.source_mute(active_sources[0].index, 0)
         elif len(active_sources) == 0:
-            print("There are no active microphones!")
+            self.print("There are no active microphones!")
         else:
-            print("There is more than one active microphone so I don't know which one to unmute")
+            self.print("There is more than one active microphone so I don't know which one to unmute")
 
 
 class UnkeebIndicator(GObject.GObject):
     def __init__(self):
-        """Constructor."""
         GObject.GObject.__init__(self)
 
         self.mute_time_seconds = 2
@@ -115,8 +119,8 @@ class UnkeebIndicator(GObject.GObject):
         self.muted_icon = os.path.abspath(os.path.join(icon_path, "muted-symbolic.svg"))
         self.unmuted_icon = os.path.abspath(os.path.join(icon_path, "unmuted-symbolic.svg"))
         self.paused_icon = os.path.abspath(os.path.join(icon_path, "paused-symbolic.svg"))
+        self.app_icon = os.path.abspath(os.path.join(icon_path, "hushboard.svg"))
 
-        # Create the indicator object
         self.ind = AppIndicator.Indicator.new(
             APP_ID, self.unmuted_icon,
             AppIndicator.IndicatorCategory.HARDWARE)
@@ -160,7 +164,6 @@ class UnkeebIndicator(GObject.GObject):
             self.ind.set_icon(self.unmuted_icon)
 
     def key_pressed(self, *args):
-        # print("mute mic!")
         if self.mpaused.get_active(): return
         self.ind.set_status(AppIndicator.IndicatorStatus.ATTENTION)
         if self.unmute_timer:
@@ -175,12 +178,11 @@ class UnkeebIndicator(GObject.GObject):
         GLib.timeout_add_seconds(1, lambda *args: Gtk.main_quit())
 
     def unmute(self):
-        # print("unmute mic!")
         self.ind.set_status(AppIndicator.IndicatorStatus.ACTIVE)
         self.unmute_timer = None
         self.queue.put_nowait({"op": "unmute"})
 
-    def show_about(*args):
+    def show_about(self, *args):
         dialog = Gtk.AboutDialog()
         dialog.set_program_name(APP_NAME)
         dialog.set_copyright('Stuart Langridge')
@@ -188,7 +190,7 @@ class UnkeebIndicator(GObject.GObject):
         dialog.set_version(APP_VERSION)
         dialog.set_website('https://kryogenix.org')
         dialog.set_website_label('kryogenix.org')
-        dialog.set_logo_icon_name('unkeeb')
+        dialog.set_logo(GdkPixbuf.Pixbuf.new_from_file(self.app_icon))
         dialog.connect('response', lambda *largs: dialog.destroy())
         dialog.run()
 
@@ -201,4 +203,5 @@ if __name__ == "__main__":
     try:
         UnkeebIndicator().run()
     except KeyboardInterrupt:
+        # unmute if interrupted by ^c because the ^c keypress will have muted!
         PulseHandler(None).unmute()

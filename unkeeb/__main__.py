@@ -110,24 +110,31 @@ class UnkeebIndicator(GObject.GObject):
         self.mute_time_seconds = 2
 
         icon_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "icons"))
-        muted_icon = os.path.abspath(os.path.join(icon_path, "muted-symbolic.svg"))
-        unmuted_icon = os.path.abspath(os.path.join(icon_path, "unmuted-symbolic.svg"))
+        self.muted_icon = os.path.abspath(os.path.join(icon_path, "muted-symbolic.svg"))
+        self.unmuted_icon = os.path.abspath(os.path.join(icon_path, "unmuted-symbolic.svg"))
+        self.paused_icon = os.path.abspath(os.path.join(icon_path, "paused-symbolic.svg"))
 
         # Create the indicator object
         self.ind = AppIndicator.Indicator.new(
-            APP_ID, unmuted_icon,
+            APP_ID, self.unmuted_icon,
             AppIndicator.IndicatorCategory.HARDWARE)
         self.ind.set_status(AppIndicator.IndicatorStatus.ACTIVE)
-        self.ind.set_attention_icon(muted_icon)
+        self.ind.set_attention_icon(self.muted_icon)
 
         self.menu = Gtk.Menu()
         self.ind.set_menu(self.menu)
-        mabout = Gtk.MenuItem.new_with_mnemonic("About")
+
+        self.mpaused = Gtk.CheckMenuItem.new_with_mnemonic("_Pause")
+        self.mpaused.connect("toggled", self.toggle_paused, None)
+        self.mpaused.show()
+        self.menu.append(self.mpaused)
+
+        mabout = Gtk.MenuItem.new_with_mnemonic("_About")
         mabout.connect("activate", self.show_about, None)
         mabout.show()
         self.menu.append(mabout)
 
-        mquit = Gtk.MenuItem.new_with_mnemonic("Quit")
+        mquit = Gtk.MenuItem.new_with_mnemonic("_Quit")
         mquit.connect("activate", lambda *largs: Gtk.main_quit(), None)
         mquit.show()
         self.menu.append(mquit)
@@ -138,8 +145,15 @@ class UnkeebIndicator(GObject.GObject):
         thread.daemon = True
         thread.start()
 
+    def toggle_paused(self, widget, *args):
+        if widget.get_active():
+            self.ind.set_icon(self.paused_icon)
+        else:
+            self.ind.set_icon(self.unmuted_icon)
+
     def key_pressed(self, *args):
         # print("mute mic!")
+        if self.mpaused.get_active(): return
         self.ind.set_status(AppIndicator.IndicatorStatus.ATTENTION)
         if self.unmute_timer:
             GLib.source_remove(self.unmute_timer)

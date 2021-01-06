@@ -16,8 +16,8 @@ from Xlib import X, display
 from Xlib.ext import record
 from Xlib.protocol import rq
 
-APP_ID = 'unkeeb'
-APP_NAME = 'Unkeeb'
+APP_ID = 'hushboard'
+APP_NAME = 'Hushboard'
 APP_LICENCE = "no licence!"
 APP_VERSION = "0.0.1"
 
@@ -109,7 +109,7 @@ class PulseHandler(object):
             self.print("There is more than one active microphone so I don't know which one to unmute")
 
 
-class UnkeebIndicator(GObject.GObject):
+class HushboardIndicator(GObject.GObject):
     def __init__(self):
         GObject.GObject.__init__(self)
 
@@ -201,7 +201,7 @@ class UnkeebIndicator(GObject.GObject):
 
 if __name__ == "__main__":
     try:
-        UnkeebIndicator().run()
+        HushboardIndicator().run()
     except KeyboardInterrupt:
         # unmute if interrupted by ^c because the ^c keypress will have muted!
         PulseHandler(None).unmute()

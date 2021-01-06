@@ -1,3 +1,7 @@
-I hate this name. it's not being called this
+# Hushboard
 
-(run as `python3 -m hushboard`)
+![icon](https://raw.githubusercontent.com/stuartlangridge/hushboard/main/hushboard/icons/hushboard.svg)
+
+Mute your microphone while typing, for Ubuntu.
+
+(for techies: run as `python3 -m hushboard`)

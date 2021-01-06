@@ -198,4 +198,7 @@ class UnkeebIndicator(GObject.GObject):
 
 
 if __name__ == "__main__":
-    UnkeebIndicator().run()
+    try:
+        UnkeebIndicator().run()
+    except KeyboardInterrupt:
+        PulseHandler(None).unmute()

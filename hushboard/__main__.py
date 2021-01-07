@@ -136,7 +136,7 @@ class HushboardIndicator(GObject.GObject):
     def __init__(self):
         GObject.GObject.__init__(self)
 
-        self.mute_time_seconds = 2
+        self.mute_time_ms = 150
 
         icon_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "icons"))
         self.muted_icon = os.path.abspath(os.path.join(icon_path, "muted-symbolic.svg"))
@@ -193,8 +193,8 @@ class HushboardIndicator(GObject.GObject):
             GLib.source_remove(self.unmute_timer)
         else:
             self.queue.put_nowait({"op": "mute"})
-        self.unmute_timer = GLib.timeout_add_seconds(
-            self.mute_time_seconds, self.unmute)
+        self.unmute_timer = GLib.timeout_add(
+            self.mute_time_ms, self.unmute)
 
     def quit(self, *args):
         self.unmute()

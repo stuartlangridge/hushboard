@@ -147,7 +147,7 @@ class HushboardIndicator(GObject.GObject):
 
         self.unmute_timer = None
 
-        self.queue = queue.SimpleQueue()
+        self.queue = queue.Queue()
         pulsehandler = PulseHandler(self.queue)
         thread = threading.Thread(target=pulsehandler.wait)
         thread.daemon = True

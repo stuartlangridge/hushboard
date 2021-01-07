@@ -1,0 +1,38 @@
+name: hushboard
+base: core18
+version: 'git'
+summary: Mute your microphone while typing
+description: |
+  Save your friends and colleagues from the noise of your keyboard while on
+  audio or video calls. Hushboard detects keypresses and automatically mutes
+  your microphone, unmuting shortly after you finish typing.
+
+grade: stable
+confinement: strict
+
+parts:
+  launcher:
+    plugin: dump
+    source: snap/local/
+  hushboard:
+    plugin: dump
+    source: https://github.com/stuartlangridge/hushboard.git
+    stage-packages:
+      - gir1.2-appindicator3-0.1
+      - python3-xlib
+    prime:
+      - usr/lib/girepository-1.0/AppIndicator3-0.1.typelib
+      - usr/lib/*/libappindicator3.so.*
+      - usr/lib/python3/dist-packages/*
+      - hushboard/*
+      - bin/*
+
+apps:
+  hushboard:
+    extensions: [gnome-3-34]
+    environment:
+      LD_LIBRARY_PATH: $SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/pulseaudio
+    command: bin/launcher
+    plugs:
+      - x11
+      - audio-playback

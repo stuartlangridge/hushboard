@@ -42,7 +42,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 """
-APP_VERSION = "0.0.1"
+APP_VERSION = os.environ.get("SNAP_VERSION", "latest")
 
 record_dpy = display.Display()
 

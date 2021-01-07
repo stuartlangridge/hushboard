@@ -1,5 +1,3 @@
 #!/bin/bash
-PYTHONPATH=$SNAP/usr/lib/python3/dist-packages:$PYTHONPATH
 cd $SNAP
-#$SNAP/usr/bin/python3 -m hushboard
 /usr/bin/python3 -m hushboard

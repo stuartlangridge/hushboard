@@ -38,6 +38,7 @@ apps:
     extensions: [gnome-3-34]
     environment:
       LD_LIBRARY_PATH: $SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/pulseaudio
+      PYTHONPATH: $SNAP/usr/lib/python3/dist-packages:$PYTHONPATH
     command: bin/launcher
     plugs:
       - x11

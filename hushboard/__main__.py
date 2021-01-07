@@ -136,7 +136,7 @@ class HushboardIndicator(GObject.GObject):
     def __init__(self):
         GObject.GObject.__init__(self)
 
-        self.mute_time_ms = 150
+        self.mute_time_ms = 250
 
         icon_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "icons"))
         self.muted_icon = os.path.abspath(os.path.join(icon_path, "muted-symbolic.svg"))

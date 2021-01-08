@@ -22,7 +22,7 @@ setup(
     url="https://github.com/stuartlangridge/hushboard",
     packages=find_packages(),
     install_requires=[],
-    python_requires=">=3.6.12",
+    python_requires=">=3.6",
     entry_points={
         "console_scripts": ["hushboard=hushboard.__main__:main"],
     },

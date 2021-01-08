@@ -113,23 +113,25 @@ class PulseHandler(object):
 
     def mute(self):
         active_sources = [s for s in self.pulse.source_list() if s.port_active]
-        if len(active_sources) == 1:
-            self.print("Muting active mic", active_sources[0])
-            self.pulse.source_mute(active_sources[0].index, 1)
-        elif len(active_sources) == 0:
-            self.print("There are no active microphones!")
+        if not active_sources:
+            self.print("There are no active microphones, so not muting anything")
         else:
-            self.print("There is more than one active microphone so I don't know which one to unmute")
+            if len(active_sources) > 1:
+                self.print("There are {} active mics".format(len(active_sources)))
+            for m in active_sources:
+                self.print("Muting active mic", m)
+                self.pulse.source_mute(m.index, 1)
 
     def unmute(self):
         active_sources = [s for s in self.pulse.source_list() if s.port_active]
-        if len(active_sources) == 1:
-            self.print("Unmuting active mic", active_sources[0])
-            self.pulse.source_mute(active_sources[0].index, 0)
-        elif len(active_sources) == 0:
-            self.print("There are no active microphones!")
+        if not active_sources:
+            self.print("There are no active microphones, so not unmuting anything")
         else:
-            self.print("There is more than one active microphone so I don't know which one to unmute")
+            if len(active_sources) > 1:
+                self.print("There are {} active mics".format(len(active_sources)))
+            for m in active_sources:
+                self.print("Unmuting active mic", m)
+                self.pulse.source_mute(m.index, 0)
 
 
 class HushboardIndicator(GObject.GObject):

@@ -224,9 +224,13 @@ class HushboardIndicator(GObject.GObject):
         Gtk.main()
 
 
-if __name__ == "__main__":
+def main():
     try:
         HushboardIndicator().run()
     except KeyboardInterrupt:
         # unmute if interrupted by ^c because the ^c keypress will have muted!
         PulseHandler(None).unmute()
+
+
+if __name__ == "__main__":
+    main()

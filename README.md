@@ -1,3 +1,6 @@
+Own notes:
+ python3 -m venv venv --system-site-packages
+apt install gir1.2-appindicator3-0.1
 # Hushboard
 
 ![icon](https://raw.githubusercontent.com/stuartlangridge/hushboard/main/hushboard/icons/hushboard.svg)

@@ -62,9 +62,8 @@ def record_callback(reply, key_press_handler):
     data = reply.data
     while len(data):
         event, data = rq.EventField(None).parse_binary_value(data, record_dpy.display, None, None)
-
         if event.type in [X.KeyPress, X.KeyRelease]:
-            GLib.idle_add(key_press_handler)
+            GLib.idle_add(key_press_handler, event.type, event.detail)
 
 
 def xcallback(key_press_handler):
@@ -83,7 +82,7 @@ def xlistener(key_press_handler):
             'ext_requests': (0, 0, 0, 0),
             'ext_replies': (0, 0, 0, 0),
             'delivered_events': (0, 0),
-            'device_events': (X.KeyPress, X.KeyPress),
+            'device_events': (X.KeyPress, X.KeyRelease),
             'errors': (0, 0),
             'client_started': False,
             'client_died': False,
@@ -190,13 +189,19 @@ class HushboardIndicator(GObject.GObject):
 
     def key_pressed(self, *args):
         if self.mpaused.get_active(): return
-        self.ind.set_status(AppIndicator.IndicatorStatus.ATTENTION)
-        if self.unmute_timer:
-            GLib.source_remove(self.unmute_timer)
-        else:
-            self.queue.put_nowait({"op": "mute"})
-        self.unmute_timer = GLib.timeout_add(
-            self.mute_time_ms, self.unmute)
+        keyevent = args[0]
+        keydetail = args[1]
+        if keydetail != 108: return
+        if keyevent == X.KeyPress:
+          print("unmute")
+          self.queue.put_nowait({"op": "unmute"})
+          self.ind.set_status(AppIndicator.IndicatorStatus.ACTIVE)
+        elif keyevent == X.KeyRelease:
+          print("mute")
+          self.queue.put_nowait({"op": "mute"})
+          self.ind.set_status(AppIndicator.IndicatorStatus.ATTENTION)
+    def key_released(self, *args):
+        print("hul igennem")
 
     def quit(self, *args):
         self.unmute()

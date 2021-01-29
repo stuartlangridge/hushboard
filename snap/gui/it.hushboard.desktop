@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Hushboard
+Comment=Mute your microphone while typing
+Comment[it_IT]=Disattivare il microfono durante la digitazione
+GenericName=Hushboard
+GenericName[it_IT]=Hushboard
+Icon=${SNAP}/hushboard/icons/hushboard.svg
+Exec=hushboard
+Terminal=false
+Keywords=audio;mute;microphone;conference;call;
+Categories=GTK;Graphics;

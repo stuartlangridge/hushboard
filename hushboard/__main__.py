@@ -151,6 +151,7 @@ class HushboardIndicator(GObject.GObject):
             AppIndicator.IndicatorCategory.HARDWARE)
         self.ind.set_status(AppIndicator.IndicatorStatus.ACTIVE)
         self.ind.set_attention_icon(self.muted_icon)
+        self.ind.set_title(APP_NAME)
 
         self.menu = Gtk.Menu()
         self.ind.set_menu(self.menu)

@@ -16,6 +16,8 @@ from Xlib import X, display
 from Xlib.ext import record
 from Xlib.protocol import rq
 
+from . import config
+
 APP_ID = 'hushboard'
 APP_NAME = 'Hushboard'
 APP_LICENCE = """
@@ -45,7 +47,7 @@ SOFTWARE.
 APP_VERSION = os.environ.get("SNAP_VERSION", "latest")
 
 record_dpy = display.Display()
-
+currentOp = "unmute"
 
 def record_callback(reply, key_press_handler):
     if reply.category != record.FromServer:
@@ -120,6 +122,8 @@ class PulseHandler(object):
             for m in active_sources:
                 self.print("Muting active mic", m)
                 self.pulse.source_mute(m.index, 1)
+            global currentOp
+            currentOp = "mute"
 
     def unmute(self):
         active_sources = [s for s in self.pulse.source_list() if s.port_active]
@@ -131,13 +135,15 @@ class PulseHandler(object):
             for m in active_sources:
                 self.print("Unmuting active mic", m)
                 self.pulse.source_mute(m.index, 0)
+            global currentOp
+            currentOp = "unmute"
 
 
 class HushboardIndicator(GObject.GObject):
     def __init__(self):
         GObject.GObject.__init__(self)
 
-        self.mute_time_ms = 250
+        config.load_configuration(self)
 
         icon_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "icons"))
         self.muted_icon = os.path.abspath(os.path.join(icon_path, "muted-symbolic.svg"))
@@ -177,7 +183,12 @@ class HushboardIndicator(GObject.GObject):
         thread.daemon = True
         thread.start()
 
-        thread = threading.Thread(target=xlistener, args=(self.key_pressed,))
+        if config.push_to_talk or config.push_to_toggle:
+            if config.push_to_talk:  # Mute on start get correct initial state when using push to talk
+                self.mute()
+            thread = threading.Thread(target=xlistener, args=(self.handle_push_to_talk,))
+        else:
+            thread = threading.Thread(target=xlistener, args=(self.key_pressed,))
         thread.daemon = True
         thread.start()
 
@@ -189,23 +200,38 @@ class HushboardIndicator(GObject.GObject):
 
     def key_pressed(self, *args):
         if self.mpaused.get_active(): return
+        self.ind.set_status(AppIndicator.IndicatorStatus.ATTENTION)
+        if self.unmute_timer:
+            GLib.source_remove(self.unmute_timer)
+        else:
+            self.queue.put_nowait({"op": "mute"})
+        self.unmute_timer = GLib.timeout_add(
+            config.mute_time_ms, self.unmute)
+
+    def handle_push_to_talk(self, *args):
+        if self.mpaused.get_active(): return
         keyevent = args[0]
         keydetail = args[1]
-        if keydetail != 108: return
-        if keyevent == X.KeyPress:
-          print("unmute")
-          self.queue.put_nowait({"op": "unmute"})
-          self.ind.set_status(AppIndicator.IndicatorStatus.ACTIVE)
-        elif keyevent == X.KeyRelease:
-          print("mute")
-          self.queue.put_nowait({"op": "mute"})
-          self.ind.set_status(AppIndicator.IndicatorStatus.ATTENTION)
-    def key_released(self, *args):
-        print("hul igennem")
+        if keydetail == config.push_to_talk_key:
+            if keyevent == X.KeyPress:
+                self.unmute()
+            elif keyevent == X.KeyRelease:
+                self.mute()
+        elif keydetail == config.push_to_toggle_key:
+            if keyevent == X.KeyPress:
+                if currentOp == "unmute":
+                    self.mute()
+                else:
+                    self.unmute()
+       
 
     def quit(self, *args):
         self.unmute()
         GLib.timeout_add_seconds(1, lambda *args: Gtk.main_quit())
+
+    def mute(self):
+        self.queue.put_nowait({"op": "mute"})
+        self.ind.set_status(AppIndicator.IndicatorStatus.ATTENTION)
 
     def unmute(self):
         self.ind.set_status(AppIndicator.IndicatorStatus.ACTIVE)

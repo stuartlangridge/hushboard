@@ -212,12 +212,12 @@ class HushboardIndicator(GObject.GObject):
         if self.mpaused.get_active(): return
         keyevent = args[0]
         keydetail = args[1]
-        if keydetail == config.push_to_talk_key:
+        if config.push_to_talk and keydetail == config.push_to_talk_key:
             if keyevent == X.KeyPress:
                 self.unmute()
             elif keyevent == X.KeyRelease:
                 self.mute()
-        elif keydetail == config.push_to_toggle_key:
+        elif config.push_to_toggle and keydetail == config.push_to_toggle_key:
             if keyevent == X.KeyPress:
                 if currentOp == "unmute":
                     self.mute()

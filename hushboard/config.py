@@ -9,8 +9,12 @@ mute_time_ms = 250
 
 def load_configuration(self):
     config = configparser.ConfigParser()
-    config.read(os.path.expanduser('~/.config/hushboard.cfg'))
-
+    try:
+        config.read(os.path.expanduser('~/.config/hushboard.cfg'))
+    except (configparser.NoSectionError, configparser.MissingSectionHeaderError):
+        print("No section header found in file")
+        return
+    
     default_section = 'Default'
 
     if not config.has_section(default_section):

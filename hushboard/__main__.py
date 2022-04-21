@@ -165,6 +165,12 @@ class HushboardIndicator(GObject.GObject):
         self.mpaused.show()
         self.menu.append(self.mpaused)
 
+        if config.push_to_toggle:
+            mtoggle = Gtk.MenuItem.new_with_mnemonic("_Toggle")
+            mtoggle.connect("activate", self.toggle_mute, None)
+            mtoggle.show()
+            self.menu.append(mtoggle)
+
         mabout = Gtk.MenuItem.new_with_mnemonic("_About")
         mabout.connect("activate", self.show_about, None)
         mabout.show()
@@ -191,6 +197,12 @@ class HushboardIndicator(GObject.GObject):
             thread = threading.Thread(target=xlistener, args=(self.key_pressed,))
         thread.daemon = True
         thread.start()
+
+    def toggle_mute(self, *args):
+        if currentOp == "unmute":
+            self.mute()
+        else:
+            self.unmute()
 
     def toggle_paused(self, widget, *args):
         if widget.get_active():
@@ -219,10 +231,7 @@ class HushboardIndicator(GObject.GObject):
                 self.mute()
         elif config.push_to_toggle and keydetail == config.push_to_toggle_key:
             if keyevent == X.KeyPress:
-                if currentOp == "unmute":
-                    self.mute()
-                else:
-                    self.unmute()
+                self.toggle_mute()
        
 
     def quit(self, *args):

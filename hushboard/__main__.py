@@ -43,7 +43,7 @@ SOFTWARE.
 
 """
 # Important that APP_VERSION line has = "(num)" in so gitcommit script finds it
-APP_VERSION = "1.60.31"
+APP_VERSION = "1.60.39"
 sv = os.environ.get("SNAP_VERSION")
 if sv:
     APP_VERSION = f"{sv} (snap)"
@@ -174,6 +174,7 @@ class HushboardIndicator(GObject.GObject):
             AppIndicator.IndicatorCategory.HARDWARE)
         self.ind.set_status(AppIndicator.IndicatorStatus.ACTIVE)
         self.ind.set_attention_icon_full(self.muted_icon, "muted")
+        self.ind.set_title(APP_NAME)
 
         self.menu = Gtk.Menu()
         self.ind.set_menu(self.menu)
@@ -247,9 +248,13 @@ class HushboardIndicator(GObject.GObject):
         Gtk.main()
 
 
-if __name__ == "__main__":
+def main():
     try:
         HushboardIndicator().run()
     except KeyboardInterrupt:
         # unmute if interrupted by ^c because the ^c keypress will have muted!
         PulseHandler(None).unmute()
+
+
+if __name__ == "__main__":
+    main()

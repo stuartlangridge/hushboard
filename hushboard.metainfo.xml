@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright 2022 Stuart Langridge -->
+<component type="desktop-application">
+  <id>hushboard.desktop</id>
+  <launchable type="desktop-id">hushboard.desktop</launchable>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <name>hushboard</name>
+  <summary>Mute your mic while you’re typing</summary>
+  <description>
+    <p>Never listen to the thundering sounds of someone typing on a video call ever again!</p>
+    <p>Well, nobody who talks to you will have to listen to it. If you don’t want to listen
+      to it either, encourage your friends and colleagues to install Hushboard. While you’re
+      typing, your mic is muted. When you stop, it unmutes again.</p>
+    <p>That’s it.</p>
+    <p>Hushboard. Sssshhhh.</p>
+  </description>
+  <provides>
+    <binary>hushboard</binary>
+  </provides>
+  <screenshots>
+    <screenshot type="default">
+      <image>https://camo.githubusercontent.com/c83dc511057bfebcfe4120d2199dfe47c83c633e4a7123e6b0d7b24b1a44db96/68747470733a2f2f696d672e796f75747562652e636f6d2f76692f69635842376a387a5551672f6d617872657364656661756c742e6a7067</image>
+    </screenshot>
+  </screenshots>
+  <url type="homepage">https://kryogenix.org/code/hushboard/</url>
+  <update_contact>sil at kryogenix.org</update_contact>
+  <content_rating type="oars-1.1" />
+  <developer_name>Stuart Langridge</developer_name>
+  <url type="bugtracker">https://github.com/stuartlangridge/hushboard/issues</url>
+  <url type="donation">https://paypal.me/stuartlangridge</url>
+  <releases>
+    <release date="2022-05-15" version="1.60.31" />
+    <release date="2022-05-12" version="1.60.30" />
+  </releases>
+</component>

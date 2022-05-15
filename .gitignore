@@ -1,1 +1,4 @@
 __pycache__
+.flatpak-builder
+sil-flatpack-build.sh
+gitcommit

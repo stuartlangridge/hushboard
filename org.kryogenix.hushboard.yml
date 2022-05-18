@@ -9,6 +9,7 @@ finish-args:
   - --socket=x11
   - --socket=pulseaudio
   - --talk-name=org.kde.StatusNotifierWatcher
+  - --env=PULSE_PROP_media.category=Manager
 
 rename-desktop-file: hushboard.desktop
 rename-appdata-file: hushboard.metainfo.xml

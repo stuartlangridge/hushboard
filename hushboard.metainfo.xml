@@ -30,6 +30,7 @@
   <url type="bugtracker">https://github.com/stuartlangridge/hushboard/issues</url>
   <url type="donation">https://paypal.me/stuartlangridge</url>
   <releases>
+    <release date="2022-05-18" version="1.60.40" />
     <release date="2022-05-15" version="1.60.39" />
     <release date="2022-05-15" version="1.60.31" />
     <release date="2022-05-12" version="1.60.30" />

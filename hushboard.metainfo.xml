@@ -14,6 +14,7 @@
       typing, your mic is muted. When you stop, it unmutes again.</p>
     <p>That’s it.</p>
     <p>Hushboard. Sssshhhh.</p>
+    <p>(note: does not work in Wayland sessions; hushboard requires an Xorg session.)</p>
   </description>
   <provides>
     <binary>hushboard</binary>
@@ -30,6 +31,7 @@
   <url type="bugtracker">https://github.com/stuartlangridge/hushboard/issues</url>
   <url type="donation">https://paypal.me/stuartlangridge</url>
   <releases>
+    <release date="2022-05-18" version="1.60.41" />
     <release date="2022-05-18" version="1.60.40" />
     <release date="2022-05-15" version="1.60.39" />
     <release date="2022-05-15" version="1.60.31" />

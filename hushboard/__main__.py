@@ -43,7 +43,7 @@ SOFTWARE.
 
 """
 # Important that APP_VERSION line has = "(num)" in so gitcommit script finds it
-APP_VERSION = "1.60.40"
+APP_VERSION = "1.60.41"
 sv = os.environ.get("SNAP_VERSION")
 if sv:
     APP_VERSION = f"{sv} (snap)"

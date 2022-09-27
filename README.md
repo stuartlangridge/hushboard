@@ -1,3 +1,6 @@
+Own notes:
+ python3 -m venv venv --system-site-packages
+apt install gir1.2-appindicator3-0.1
 # Hushboard
 
 ![icon](https://raw.githubusercontent.com/stuartlangridge/hushboard/main/hushboard/icons/hushboard.svg)
@@ -24,6 +27,21 @@ If you're on Arch (btw), there's also an AUR package available for installation:
 ```bash
 yay -S hushboard-git
 ```
+## Configuration
+Create a configuration file in your .config folder
+
+```bash
+touch ~/.config/hushboard.cfg
+```
+The using your favorite editor start by adding a section at the top, then add the needed configurations e.g.
+```
+[Default]
+PushKey = 108
+ToggleKey = 64
+MuteTimeMs = 500
+```
+Setting the PushKey or ToggleKey will also enable push to talk instead of type to mute
+For possible keycodes use e.g. exv
 
 ## Manual installation
 

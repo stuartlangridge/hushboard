@@ -9,4 +9,4 @@ Icon=${SNAP}/hushboard/icons/hushboard.svg
 Exec=hushboard
 Terminal=false
 Keywords=audio;mute;microphone;conference;call;
-Categories=GTK;Graphics;
+Categories=GTK;Utility;

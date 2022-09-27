@@ -44,7 +44,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 """
-APP_VERSION = os.environ.get("SNAP_VERSION", "latest")
+# Important that APP_VERSION line has = "(num)" in so gitcommit script finds it
+APP_VERSION = "1.60.41"
+sv = os.environ.get("SNAP_VERSION")
+if sv:
+    APP_VERSION = f"{sv} (snap)"
 
 record_dpy = display.Display()
 currentOp = "unmute"
@@ -141,21 +145,41 @@ class PulseHandler(object):
 
 class HushboardIndicator(GObject.GObject):
     def __init__(self):
+        global APP_VERSION
         GObject.GObject.__init__(self)
 
         config.load_configuration(self)
 
-        icon_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "icons"))
+        icon_path = None
+        local_icon_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "icons"))
+        if os.path.exists("/.flatpak-info"):
+            # we're inside a flatpak
+            # we need to use the real path, not the in-the-flatpak
+            # path, so the panel can read it
+            import configparser
+            try:
+                c = configparser.ConfigParser(interpolation=None)
+                c.read("/.flatpak-info")
+                real_fs_path = c.get('Instance', 'app-path', fallback=None)
+                if real_fs_path:
+                    icon_path = os.path.join(real_fs_path, "hushboard", "icons")
+                    APP_VERSION = f"{APP_VERSION} (flatpak)"
+            except Exception as e:
+                print(f"Tried to read /.flatpak-info but failed", e)
+        if not icon_path:
+            icon_path = local_icon_path
+
         self.muted_icon = os.path.abspath(os.path.join(icon_path, "muted-symbolic.svg"))
         self.unmuted_icon = os.path.abspath(os.path.join(icon_path, "unmuted-symbolic.svg"))
         self.paused_icon = os.path.abspath(os.path.join(icon_path, "paused-symbolic.svg"))
-        self.app_icon = os.path.abspath(os.path.join(icon_path, "hushboard.svg"))
+        self.app_icon = os.path.abspath(os.path.join(local_icon_path, "hushboard.svg"))
 
         self.ind = AppIndicator.Indicator.new(
             APP_ID, self.unmuted_icon,
             AppIndicator.IndicatorCategory.HARDWARE)
         self.ind.set_status(AppIndicator.IndicatorStatus.ACTIVE)
-        self.ind.set_attention_icon(self.muted_icon)
+        self.ind.set_attention_icon_full(self.muted_icon, "muted")
+        self.ind.set_title(APP_NAME)
 
         self.menu = Gtk.Menu()
         self.ind.set_menu(self.menu)
@@ -206,9 +230,9 @@ class HushboardIndicator(GObject.GObject):
 
     def toggle_paused(self, widget, *args):
         if widget.get_active():
-            self.ind.set_icon(self.paused_icon)
+            self.ind.set_icon_full(self.paused_icon, "paused")
         else:
-            self.ind.set_icon(self.unmuted_icon)
+            self.ind.set_icon_full(self.unmuted_icon, "unmuted")
 
     def key_pressed(self, *args):
         if self.mpaused.get_active(): return
@@ -253,7 +277,7 @@ class HushboardIndicator(GObject.GObject):
         dialog.set_copyright('Stuart Langridge')
         dialog.set_license(APP_LICENCE)
         dialog.set_version(APP_VERSION)
-        dialog.set_website('https://kryogenix.org')
+        dialog.set_website('https://kryogenix.org/code/hushboard')
         dialog.set_website_label('kryogenix.org')
         dialog.set_logo(GdkPixbuf.Pixbuf.new_from_file(self.app_icon))
         dialog.connect('response', lambda *largs: dialog.destroy())

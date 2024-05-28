@@ -16,6 +16,8 @@ from Xlib import X, display
 from Xlib.ext import record
 from Xlib.protocol import rq
 
+from . import config
+
 APP_ID = 'hushboard'
 APP_NAME = 'Hushboard'
 APP_LICENCE = """
@@ -49,7 +51,7 @@ if sv:
     APP_VERSION = f"{sv} (snap)"
 
 record_dpy = display.Display()
-
+currentOp = "unmute"
 
 def record_callback(reply, key_press_handler):
     if reply.category != record.FromServer:
@@ -66,9 +68,8 @@ def record_callback(reply, key_press_handler):
     data = reply.data
     while len(data):
         event, data = rq.EventField(None).parse_binary_value(data, record_dpy.display, None, None)
-
         if event.type in [X.KeyPress, X.KeyRelease]:
-            GLib.idle_add(key_press_handler)
+            GLib.idle_add(key_press_handler, event.type, event.detail)
 
 
 def xcallback(key_press_handler):
@@ -87,7 +88,7 @@ def xlistener(key_press_handler):
             'ext_requests': (0, 0, 0, 0),
             'ext_replies': (0, 0, 0, 0),
             'delivered_events': (0, 0),
-            'device_events': (X.KeyPress, X.KeyPress),
+            'device_events': (X.KeyPress, X.KeyRelease),
             'errors': (0, 0),
             'client_started': False,
             'client_died': False,
@@ -125,6 +126,8 @@ class PulseHandler(object):
             for m in active_sources:
                 self.print("Muting active mic", m)
                 self.pulse.source_mute(m.index, 1)
+            global currentOp
+            currentOp = "mute"
 
     def unmute(self):
         active_sources = [s for s in self.pulse.source_list() if s.port_active]
@@ -136,6 +139,8 @@ class PulseHandler(object):
             for m in active_sources:
                 self.print("Unmuting active mic", m)
                 self.pulse.source_mute(m.index, 0)
+            global currentOp
+            currentOp = "unmute"
 
 
 class HushboardIndicator(GObject.GObject):
@@ -143,7 +148,7 @@ class HushboardIndicator(GObject.GObject):
         global APP_VERSION
         GObject.GObject.__init__(self)
 
-        self.mute_time_ms = 250
+        config.load_configuration(self)
 
         icon_path = None
         local_icon_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "icons"))
@@ -184,6 +189,12 @@ class HushboardIndicator(GObject.GObject):
         self.mpaused.show()
         self.menu.append(self.mpaused)
 
+        if config.push_to_toggle:
+            mtoggle = Gtk.MenuItem.new_with_mnemonic("_Toggle")
+            mtoggle.connect("activate", self.toggle_mute, None)
+            mtoggle.show()
+            self.menu.append(mtoggle)
+
         mabout = Gtk.MenuItem.new_with_mnemonic("_About")
         mabout.connect("activate", self.show_about, None)
         mabout.show()
@@ -202,9 +213,20 @@ class HushboardIndicator(GObject.GObject):
         thread.daemon = True
         thread.start()
 
-        thread = threading.Thread(target=xlistener, args=(self.key_pressed,))
+        if config.push_to_talk or config.push_to_toggle:
+            if config.push_to_talk:  # Mute on start get correct initial state when using push to talk
+                self.mute()
+            thread = threading.Thread(target=xlistener, args=(self.handle_push_to_talk,))
+        else:
+            thread = threading.Thread(target=xlistener, args=(self.key_pressed,))
         thread.daemon = True
         thread.start()
+
+    def toggle_mute(self, *args):
+        if currentOp == "unmute":
+            self.mute()
+        else:
+            self.unmute()
 
     def toggle_paused(self, widget, *args):
         if widget.get_active():
@@ -220,11 +242,29 @@ class HushboardIndicator(GObject.GObject):
         else:
             self.queue.put_nowait({"op": "mute"})
         self.unmute_timer = GLib.timeout_add(
-            self.mute_time_ms, self.unmute)
+            config.mute_time_ms, self.unmute)
+
+    def handle_push_to_talk(self, *args):
+        if self.mpaused.get_active(): return
+        keyevent = args[0]
+        keydetail = args[1]
+        if config.push_to_talk and keydetail == config.push_to_talk_key:
+            if keyevent == X.KeyPress:
+                self.unmute()
+            elif keyevent == X.KeyRelease:
+                self.mute()
+        elif config.push_to_toggle and keydetail == config.push_to_toggle_key:
+            if keyevent == X.KeyPress:
+                self.toggle_mute()
+       
 
     def quit(self, *args):
         self.unmute()
         GLib.timeout_add_seconds(1, lambda *args: Gtk.main_quit())
+
+    def mute(self):
+        self.queue.put_nowait({"op": "mute"})
+        self.ind.set_status(AppIndicator.IndicatorStatus.ATTENTION)
 
     def unmute(self):
         self.ind.set_status(AppIndicator.IndicatorStatus.ACTIVE)

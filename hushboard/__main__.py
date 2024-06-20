@@ -116,7 +116,7 @@ class PulseHandler(object):
         if self.verbose: print(*args)
 
     def mute(self):
-        active_sources = [s for s in self.pulse.source_list() if s.port_active]
+        active_sources = [s for s in self.pulse.source_list() if s.state == pulsectl.PulseStateEnum['running']]
         if not active_sources:
             self.print("There are no active microphones, so not muting anything")
         else:
@@ -127,7 +127,7 @@ class PulseHandler(object):
                 self.pulse.source_mute(m.index, 1)
 
     def unmute(self):
-        active_sources = [s for s in self.pulse.source_list() if s.port_active]
+        active_sources = [s for s in self.pulse.source_list() if s.state == pulsectl.PulseStateEnum['running']]
         if not active_sources:
             self.print("There are no active microphones, so not unmuting anything")
         else:
